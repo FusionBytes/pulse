@@ -6,23 +6,18 @@ import (
 )
 
 func main() {
-	hm := hashmap.New(10)
+	bucketCount := 3
+	bucketSizeLimit := 8
+	hm := hashmap.New(bucketCount, bucketSizeLimit)
 
-	hm.Put("name", "Alice")
-	hm.Put("age", 30)
-	hm.Put("city", "Wonderland")
-
-	if value, found := hm.Get("name"); found {
-		fmt.Println("Name:", value)
-	} else {
-		fmt.Println("Name not found")
+	for i := 0; i < bucketCount*bucketSizeLimit; i++ {
+		key := fmt.Sprintf("key-%d", i)
+		value := fmt.Sprintf("value-%d", i)
+		hm.Put(key, value)
 	}
 
-	hm.Delete("age")
-
-	if value, found := hm.Get("age"); found {
-		fmt.Println("Age:", value)
-	} else {
-		fmt.Println("Age not found")
-	}
+	hm.PrintBuckets()
+	fmt.Println(hm.Get("key-20"))
+	hm.Delete("key-20")
+	fmt.Println(hm.Get("key-20"))
 }
