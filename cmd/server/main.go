@@ -1,9 +1,11 @@
-package server
+package main
 
 import (
 	"fmt"
 	"net"
 	"os"
+	"pulse/internal/commands/mock"
+	"pulse/internal/parser"
 )
 
 const (
@@ -14,6 +16,9 @@ const (
 
 func main() {
 	fmt.Println("Server running...")
+	parser := parser.NewParser(
+		&mock.MockCommand{},
+	)
 	server, err := net.Listen(Type, fmt.Sprintf("%s:%s", Host, Port))
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -27,7 +32,7 @@ func main() {
 		}
 	}(server)
 
-	fmt.Println(fmt.Sprintf("Listenning on %s:%s", Host, Port))
+	fmt.Printf("Listening on %s:%s\n", Host, Port)
 	fmt.Println("Waiting for client...")
 
 	for {
@@ -43,9 +48,28 @@ func main() {
 			if err != nil {
 				fmt.Println("Error reading:", err.Error())
 			}
-			fmt.Println("Received: ", string(buffer[:mLen]))
-			_, err = connection.Write([]byte("Thanks! Got your message:" + string(buffer[:mLen])))
-			connection.Close()
+			cmd := string(buffer[:mLen])
+
+			result, err := parser.Execute(cmd)
+
+			if err != nil {
+				_, _ = connection.Write([]byte(fmt.Sprintf("there is an error %s", err.Error())))
+				connection.Close()
+				return
+			}
+
+			if intResult, ok := result.(int); ok {
+				_, _ = connection.Write([]byte(fmt.Sprintf("the result is %d", intResult)))
+				connection.Close()
+				return
+			}
+
+
+			if strResult, ok := result.(string); ok {
+				_, _ = connection.Write([]byte(fmt.Sprintf("the result is %s", strResult)))
+				connection.Close()
+				return
+			}
 		}(connection)
 	}
 }
