@@ -1,9 +1,11 @@
 package main
 
 import (
-	"flag"
+	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"strings"
 )
 
 const (
@@ -13,20 +15,44 @@ const (
 )
 
 func main() {
-	//establish connection
-	command := flag.String("cmd", "", "# command should sent")
-	flag.Parse()
+	// Establish connection
 	connection, err := net.Dial(ServerType, fmt.Sprintf("%s:%s", ServerHost, ServerPort))
 	if err != nil {
 		panic(err)
 	}
 	defer connection.Close()
-	///send some data
-	_, err = connection.Write([]byte(*command))
-	buffer := make([]byte, 1024)
-	mLen, err := connection.Read(buffer)
-	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+
+	// Use a buffered reader to read user input
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Print("Enter command (or type 'exit' to quit): ")
+		command, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			return
+		}
+		command = strings.TrimSpace(command)
+
+		// Send command to the server
+		_, err = connection.Write([]byte(command))
+		if err != nil {
+			fmt.Println("Error sending command:", err)
+			return
+		}
+
+		if command == "exit" {
+			fmt.Println("Exiting...")
+			return
+		}
+
+		// Read response from the server
+		buffer := make([]byte, 1024)
+		mLen, err := connection.Read(buffer)
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+			return
+		}
+		fmt.Println("Received:", string(buffer[:mLen]))
 	}
-	fmt.Println("Received: ", string(buffer[:mLen]))
 }

@@ -2,17 +2,19 @@ package mock
 
 import "fmt"
 
-
-type MockCommand struct {
-	
+type Mock struct {
 }
 
-func (m *MockCommand) CanDo(method string) bool {
+func NewMock() *Mock {
+	return &Mock{}
+}
+
+func (m *Mock) CanDo(method string) bool {
 	fmt.Println(method)
 	return true
 }
 
-func (m *MockCommand) Execute(args []string) (interface{}, error) {
+func (m *Mock) Execute(args []string) (interface{}, error) {
 	fmt.Printf("the args is %+v \n", args)
 	return "success", nil
 }
