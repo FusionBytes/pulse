@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"hash/fnv"
 	"net"
 	"os"
-	"pulse/internal/commands/mock"
+	"pulse/internal/commands"
 	"pulse/internal/parser"
+	"pulse/pkg/structure"
 )
 
 const (
@@ -16,8 +18,13 @@ const (
 
 func main() {
 	fmt.Println("Server running...")
+	scoreboards := structure.NewHashTable(fnv.New64a(), 8, 0.75)
 	parser := parser.NewParser(
-		&mock.MockCommand{},
+		commands.NewZAdd(scoreboards),
+		commands.NewZRange(scoreboards),
+		commands.NewZRank(scoreboards),
+		commands.NewZScore(scoreboards),
+		// Add more commands as needed
 	)
 	server, err := net.Listen(Type, fmt.Sprintf("%s:%s", Host, Port))
 	if err != nil {
@@ -43,32 +50,28 @@ func main() {
 		}
 		fmt.Println("client connected")
 		go func(connection net.Conn) {
+			defer connection.Close() // Ensure the connection is closed when done
+
 			buffer := make([]byte, 1024)
-			mLen, err := connection.Read(buffer)
-			if err != nil {
-				fmt.Println("Error reading:", err.Error())
-			}
-			cmd := string(buffer[:mLen])
+			for {
+				mLen, err := connection.Read(buffer)
+				if err != nil {
+					fmt.Println("Error reading:", err.Error())
+					return
+				}
+				cmd := string(buffer[:mLen])
 
-			result, err := parser.Execute(cmd)
+				result, err := parser.Execute(cmd)
+				if err != nil {
+					_, _ = connection.Write([]byte(fmt.Sprintf("there is an error %s", err.Error())))
+					continue
+				}
 
-			if err != nil {
-				_, _ = connection.Write([]byte(fmt.Sprintf("there is an error %s", err.Error())))
-				connection.Close()
-				return
-			}
-
-			if intResult, ok := result.(int); ok {
-				_, _ = connection.Write([]byte(fmt.Sprintf("the result is %d", intResult)))
-				connection.Close()
-				return
-			}
-
-
-			if strResult, ok := result.(string); ok {
-				_, _ = connection.Write([]byte(fmt.Sprintf("the result is %s", strResult)))
-				connection.Close()
-				return
+				if intResult, ok := result.(int); ok {
+					_, _ = connection.Write([]byte(fmt.Sprintf("the result is %d", intResult)))
+				} else if strResult, ok := result.(string); ok {
+					_, _ = connection.Write([]byte(fmt.Sprintf("the result is \n %s", strResult)))
+				}
 			}
 		}(connection)
 	}
