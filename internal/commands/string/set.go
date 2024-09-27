@@ -1,4 +1,4 @@
-package string_commands
+package stringcommands
 
 import (
 	"errors"
@@ -21,20 +21,28 @@ func (s SET) CanDo(cmd string) bool {
 }
 
 func (s SET) Execute(args []string) (interface{}, error) {
-	if len(args) < 2 {
-		return nil, errors.New("key and value is not provided")
-	}
-	if args[0] == "" {
-		return nil, errors.New("invalid key")
-	}
-	if args[1] == "" {
-		return nil, errors.New("invalid value")
+	err := s.validateArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
-	err := s.hashTable.Insert(args[0], args[1])
+	err = s.hashTable.Insert(args[0], args[1])
 	if err != nil {
 		return nil, err
 	}
 
 	return true, nil
+}
+
+func (s SET) validateArgs(args []string) error {
+	if len(args) < 2 {
+		return errors.New("expected at least 2 arguments")
+	}
+	if args[0] == "" {
+		return errors.New("invalid key")
+	}
+	if args[1] == "" {
+		return errors.New("invalid value")
+	}
+	return nil
 }

@@ -1,4 +1,4 @@
-package string_commands
+package stringcommands
 
 import (
 	"errors"
@@ -21,14 +21,22 @@ func (g GET) CanDo(cmd string) bool {
 }
 
 func (g GET) Execute(args []string) (interface{}, error) {
-	if len(args) == 0 {
-		return nil, errors.New("key is not provided")
-	}
-	if args[0] == "" {
-		return nil, errors.New("invalid key")
+	err := g.validateArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
 	value, _ := g.hashTable.Get(args[0])
 
 	return value, nil
+}
+
+func (g GET) validateArgs(args []string) error {
+	if len(args) == 0 {
+		return errors.New("expected at least 1 arguments")
+	}
+	if args[0] == "" {
+		return errors.New("invalid key")
+	}
+	return nil
 }

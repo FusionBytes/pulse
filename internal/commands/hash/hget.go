@@ -21,14 +21,9 @@ func (g HGET) CanDo(cmd string) bool {
 }
 
 func (g HGET) Execute(args []string) (interface{}, error) {
-	if len(args) < 2 {
-		return nil, errors.New("collection and key is not provided")
-	}
-	if args[0] == "" {
-		return nil, errors.New("invalid collection")
-	}
-	if args[1] == "" {
-		return nil, errors.New("invalid key")
+	err := g.validateArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
 	value, _ := g.hashTable.Get(args[0])
@@ -46,4 +41,17 @@ func (g HGET) Execute(args []string) (interface{}, error) {
 	value, _ = collection.Get(args[1])
 
 	return value, nil
+}
+
+func (g HGET) validateArgs(args []string) error {
+	if len(args) < 2 {
+		return errors.New("expected at least 2 arguments")
+	}
+	if args[0] == "" {
+		return errors.New("invalid collection")
+	}
+	if args[1] == "" {
+		return errors.New("invalid key")
+	}
+	return nil
 }

@@ -22,17 +22,9 @@ func (s HSET) CanDo(cmd string) bool {
 }
 
 func (s HSET) Execute(args []string) (interface{}, error) {
-	if len(args) < 3 {
-		return nil, errors.New("collection,key and value is not provided")
-	}
-	if args[0] == "" {
-		return nil, errors.New("invalid collection")
-	}
-	if args[1] == "" {
-		return nil, errors.New("invalid key")
-	}
-	if args[2] == "" {
-		return nil, errors.New("invalid value")
+	err := s.validateArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
 	var collection *structure.HashTable
@@ -49,10 +41,26 @@ func (s HSET) Execute(args []string) (interface{}, error) {
 		return nil, errors.New("unable to create collection")
 	}
 
-	err := collection.Insert(args[1], args[2])
+	err = collection.Insert(args[1], args[2])
 	if err != nil {
 		return nil, err
 	}
 
 	return collection.EntryCount(), nil
+}
+
+func (s HSET) validateArgs(args []string) error {
+	if len(args) < 3 {
+		return errors.New("expected at least 3 arguments")
+	}
+	if args[0] == "" {
+		return errors.New("invalid collection")
+	}
+	if args[1] == "" {
+		return errors.New("invalid key")
+	}
+	if args[2] == "" {
+		return errors.New("invalid value")
+	}
+	return nil
 }
