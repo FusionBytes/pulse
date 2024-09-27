@@ -39,7 +39,7 @@ type bucket struct {
 type HashTable struct {
 	hasher hasher
 
-	bucketCount int
+	bucketCount uint64
 
 	buckets []*bucket
 
@@ -50,7 +50,7 @@ type HashTable struct {
 	loadFactor float64
 }
 
-func NewHashTable(hasher hasher, bucketCount int, loadFactor float64) *HashTable {
+func NewHashTable(hasher hasher, bucketCount uint64, loadFactor float64) *HashTable {
 	if bucketCount < 2 {
 		bucketCount = 2
 	}
@@ -63,7 +63,7 @@ func NewHashTable(hasher hasher, bucketCount int, loadFactor float64) *HashTable
 	}
 }
 
-func (h *HashTable) hash(key string) (int, error) {
+func (h *HashTable) hash(key string) (uint64, error) {
 	h.hasher.Reset()
 	defer h.hasher.Reset()
 
@@ -74,16 +74,16 @@ func (h *HashTable) hash(key string) (int, error) {
 
 	hashBytes := h.hasher.Sum(nil)
 
-	hashValue := 0
+	var hashValue uint64
 
 	for _, b := range hashBytes {
-		hashValue = (hashValue << 8) + int(b)
+		hashValue = (hashValue << 8) + uint64(b)
 	}
 
 	return hashValue, nil
 }
 
-func (h *HashTable) getLOB(data int) int {
+func (h *HashTable) getLOB(data uint64) uint64 {
 	return data % h.bucketCount
 }
 
