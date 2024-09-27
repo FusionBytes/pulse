@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"pulse/internal/commands"
+	stringcommands "pulse/internal/commands/string"
 	"pulse/internal/parser"
 	"pulse/pkg/structure"
 )
@@ -24,6 +25,8 @@ func main() {
 		commands.NewZRange(scoreboards),
 		commands.NewZRank(scoreboards),
 		commands.NewZScore(scoreboards),
+		stringcommands.NewSET(),
+		stringcommands.NewGET(),
 		// Add more commands as needed
 	)
 	server, err := net.Listen(Type, fmt.Sprintf("%s:%s", Host, Port))
@@ -63,14 +66,18 @@ func main() {
 
 				result, err := parser.Execute(cmd)
 				if err != nil {
-					_, _ = connection.Write([]byte(fmt.Sprintf("there is an error %s", err.Error())))
+					_, _ = connection.Write([]byte(fmt.Sprintf("error: %s", err.Error())))
 					continue
 				}
 
-				if intResult, ok := result.(int); ok {
-					_, _ = connection.Write([]byte(fmt.Sprintf("the result is %d", intResult)))
+				if result == nil {
+					_, _ = connection.Write([]byte(fmt.Sprintf("%v", result)))
+				} else if intResult, ok := result.(int); ok {
+					_, _ = connection.Write([]byte(fmt.Sprintf("%d", intResult)))
 				} else if strResult, ok := result.(string); ok {
-					_, _ = connection.Write([]byte(fmt.Sprintf("the result is \n %s", strResult)))
+					_, _ = connection.Write([]byte(fmt.Sprintf("%s", strResult)))
+				} else if boolResult, ok := result.(bool); ok {
+					_, _ = connection.Write([]byte(fmt.Sprintf("%v", boolResult)))
 				}
 			}
 		}(connection)

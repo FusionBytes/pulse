@@ -26,7 +26,7 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Print("Enter command (or type 'exit' to quit): ")
+		fmt.Print("> ")
 		command, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Error reading input:", err)
@@ -53,6 +53,6 @@ func main() {
 			fmt.Println("Error reading:", err.Error())
 			return
 		}
-		fmt.Println("Received:", string(buffer[:mLen]))
+		fmt.Println(string(buffer[:mLen]))
 	}
 }
