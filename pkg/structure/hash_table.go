@@ -162,6 +162,10 @@ func (h *HashTable) Get(key string) (interface{}, bool) {
 	return nil, false
 }
 
+func (h *HashTable) EntryCount() int {
+	return h.entryCount
+}
+
 func (h *HashTable) resize() {
 	newBucketCount := h.bucketCount * 2
 	newTable := NewHashTable(h.hasher, newBucketCount, h.loadFactor)

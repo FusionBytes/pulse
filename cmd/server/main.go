@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"pulse/internal/commands"
+	hashcommands "pulse/internal/commands/hash"
 	stringcommands "pulse/internal/commands/string"
 	"pulse/internal/parser"
 	"pulse/pkg/structure"
@@ -27,6 +28,8 @@ func main() {
 		commands.NewZScore(scoreboards),
 		stringcommands.NewSET(),
 		stringcommands.NewGET(),
+		hashcommands.NewHSET(),
+		hashcommands.NewHGET(),
 		// Add more commands as needed
 	)
 	server, err := net.Listen(Type, fmt.Sprintf("%s:%s", Host, Port))
