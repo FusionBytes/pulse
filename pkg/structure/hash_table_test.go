@@ -141,16 +141,16 @@ func TestHashTable_InsertAndGet(t *testing.T) {
 func TestHashTable_ResizeOnLoadFactor(t *testing.T) {
 	tests := []struct {
 		name          string
-		initialSize   int
+		initialSize   uint64
 		loadFactor    float64
 		insertions    []struct{ key, value string }
-		expectedSize  int // Expected bucket size after resize
+		expectedSize  uint64 // Expected bucket size after resize
 		expectedItems map[string]interface{}
 	}{
 		{
 			name:        "Resize after exceeding load factor",
-			initialSize: 2,    // Start with 4 buckets
-			loadFactor:  0.40, // Resize when more than 40% of total slots (4*8 = 32 slots) are filled
+			initialSize: uint64(2), // Start with 4 buckets
+			loadFactor:  0.40,      // Resize when more than 40% of total slots (4*8 = 32 slots) are filled
 			insertions: []struct{ key, value string }{
 				{"key1", "value1"},
 				{"key2", "value2"},

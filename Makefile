@@ -9,6 +9,9 @@ generate:
 test: 
 	go test -v -cover -covermode=atomic ./...
 
+benchmark:
+	go test -v -bench . ./...
+
 build:
 	go build -o bin/${BINARY} ./cmd/server/main.go
 
@@ -24,9 +27,11 @@ format:
 analyze:
 	go vet ./...
 
-
 install-dependencies:
 	go mod download 
 
-run:
+run-server:
 	go run ./cmd/server/main.go
+
+run-client:
+	go run ./cmd/client/main.go

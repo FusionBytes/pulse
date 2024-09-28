@@ -10,7 +10,7 @@ import (
 // Benchmark for inserting a fixed number of elements into the hash table
 func BenchmarkHashTable_Insert(b *testing.B) {
 	hasher := hash.NewMurmur3()
-	initialSize := 8
+	initialSize := uint64(8)
 	loadFactor := 0.75
 	ht := NewHashTable(hasher, initialSize, loadFactor)
 
@@ -26,7 +26,7 @@ func BenchmarkHashTable_Insert(b *testing.B) {
 // Benchmark for Get operation with a pre-filled hash table
 func BenchmarkHashTable_Get(b *testing.B) {
 	hasher := hash.NewMurmur3()
-	initialSize := 8
+	initialSize := uint64(8)
 	loadFactor := 0.75
 	ht := NewHashTable(hasher, initialSize, loadFactor)
 
