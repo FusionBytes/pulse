@@ -1,7 +1,6 @@
 package structure
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -64,27 +63,6 @@ func (sl *SkipList) Insert(score int, member string) {
 // Uses a 50% probability (like a coin flip) to decide
 func (sl *SkipList) mustAddNewLevel() bool {
 	return rand.Float32() < 0.5
-}
-
-// Delete removes a score from the skip list
-func (sl *SkipList) Delete(value int) {
-	updatePath := sl.fetchUpdatePath(value)
-
-	// Move to the next node and delete at each level
-	var current *Node
-	for level := 0; level <= sl.highestLevel; level++ {
-		current = updatePath[level].next
-		if current == nil || current.score != value {
-			continue
-		}
-		updatePath[level].next = current.next
-	}
-
-	// Adjust the list's highestLevel if necessary
-	for sl.highestLevel > 0 && sl.head.next == nil {
-		sl.head = sl.head.below
-		sl.highestLevel--
-	}
 }
 
 // fetchUpdatePath returns the path that leads to the correct position
@@ -178,43 +156,30 @@ func (sl *SkipList) Score(member string) (int, bool) {
 // Returns -1 if the member is not found.
 func (sl *SkipList) Rank(member string) int {
 	current := sl.head
-	rank := 0
+	rank := 1
+	found := false
 
-	// Traverse the skip list starting from the highest level
+	// Move to the bottom level, where all elements are present in sorted order
+	for current.below != nil {
+			current = current.below
+	}
+
+	// Traverse the bottom level to find the member and count ranks
+	current = current.next // Skip the sentinel head node
 	for current != nil {
-		// Move forward while the next node exists and its member is lexicographically smaller
-		for current.next != nil && current.next.member < member {
-			rank++ // Increment rank for each node passed
+			if current.member == member {
+					found = true
+					break
+			}
+			rank++
 			current = current.next
-		}
-
-		// If we found the member, return its current rank
-		if current.next != nil && current.next.member == member {
-			return rank
-		}
-
-		// Move down to the next level
-		current = current.below
 	}
 
-	// Member not found, return -1
-	return -1
-}
-
-// PrintSkipList prints the skip list for visualization
-func (sl *SkipList) PrintSkipList() {
-	head := sl.head
-	level := sl.highestLevel
-	for head != nil {
-		fmt.Printf("Level %d: ", level)
-		current := head.next
-		for current != nil {
-			fmt.Printf("%d(%s) ", current.score, current.member)
-			current = current.next
-		}
-		fmt.Println()
-
-		head = head.below
-		level--
+	// If the member is not found, return -1
+	if !found {
+			return -1
 	}
+
+	// Return the computed rank
+	return rank
 }

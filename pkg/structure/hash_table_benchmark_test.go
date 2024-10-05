@@ -2,14 +2,14 @@ package structure
 
 import (
 	"fmt"
+	"hash/fnv"
 	"testing"
 
-	"pulse/pkg/hash"
 )
 
 // Benchmark for inserting a fixed number of elements into the hash table
 func BenchmarkHashTable_Insert(b *testing.B) {
-	hasher := hash.NewMurmur3()
+	hasher := fnv.New64a()
 	initialSize := uint64(8)
 	loadFactor := 0.75
 	ht := NewHashTable(hasher, initialSize, loadFactor)
@@ -25,7 +25,7 @@ func BenchmarkHashTable_Insert(b *testing.B) {
 
 // Benchmark for Get operation with a pre-filled hash table
 func BenchmarkHashTable_Get(b *testing.B) {
-	hasher := hash.NewMurmur3()
+	hasher := fnv.New64a()
 	initialSize := uint64(8)
 	loadFactor := 0.75
 	ht := NewHashTable(hasher, initialSize, loadFactor)
