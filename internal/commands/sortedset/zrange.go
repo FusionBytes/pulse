@@ -1,4 +1,4 @@
-package commands
+package sortedset
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ type ZRange struct {
 	scoreboards *structure.HashTable
 }
 
-func NewZRange(scoreboards *structure.HashTable) *ZRange {
-	return &ZRange{scoreboards: scoreboards}
+func NewZRange() *ZRange {
+	return &ZRange{scoreboards: newHashTable()}
 }
 
 func (z *ZRange) CanDo(method string) bool {
@@ -24,6 +24,11 @@ func (z *ZRange) CanDo(method string) bool {
 }
 
 func (z *ZRange) Execute(args []string) (interface{}, error) {
+	err := z.validateArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
 	scoreboard := args[0]
 	start, err := strconv.Atoi(args[1])
 	if err != nil {
@@ -37,11 +42,11 @@ func (z *ZRange) Execute(args []string) (interface{}, error) {
 	if !ok {
 		return nil, errors.New("can't find scoreboard")
 	}
-	scoreboardData, ok := fetchedScoreboard.(*structure.SkipList)
+	scoreboardData, ok := fetchedScoreboard.(*Scoreboard)
 	if !ok {
 		return nil, errors.New("can't fetch scoreboard")
 	}
-	members := scoreboardData.RangeByRank(start, stop)
+	members := scoreboardData.skipList.RangeByRank(start, stop)
 	var formattedSlice []string
 
 	// Loop through the original slice and format each string
@@ -52,4 +57,20 @@ func (z *ZRange) Execute(args []string) (interface{}, error) {
 	// Join the formatted strings with a newline separator
 	result := strings.Join(formattedSlice, "\n")
 	return result, nil
+}
+
+func (z *ZRange) validateArgs(args []string) error {
+	if len(args) < 3 {
+		return errors.New("expected at least 2 arguments")
+	}
+	if args[0] == "" {
+		return errors.New("invalid scoreboard")
+	}
+	if args[1] == "" {
+		return errors.New("invalid start rank")
+	}
+	if args[2] == "" {
+		return errors.New("invalid stop rank")
+	}
+	return nil
 }

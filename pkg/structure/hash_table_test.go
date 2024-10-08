@@ -83,7 +83,7 @@ func TestHashTable_InsertAndGet(t *testing.T) {
 			name: "Insert with collision and overflow",
 			actions: []func(*HashTable){
 				func(ht *HashTable) {
-					// Same hash for all keys to simulate collision
+					// Same getBucketIndex for all keys to simulate collision
 					err := ht.Insert("key1", "value1")
 					require.NoError(t, err)
 					err = ht.Insert("key2", "value2")
@@ -120,8 +120,7 @@ func TestHashTable_InsertAndGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hasher := &mockHasher{hashValue: 1} // Mock hasher that returns fixed hash to simulate collisions
-			ht := NewHashTable(hasher, 8, 0.8)
+			ht := NewHashTable(8, 0.8)
 
 			// Execute the actions
 			for _, action := range tt.actions {
@@ -169,8 +168,7 @@ func TestHashTable_ResizeOnLoadFactor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hasher := &mockHasher{hashValue: 1} // Fixed hash to trigger collisions
-			ht := NewHashTable(hasher, tt.initialSize, tt.loadFactor)
+			ht := NewHashTable(tt.initialSize, tt.loadFactor)
 
 			// Insert all keys
 			for _, kv := range tt.insertions {

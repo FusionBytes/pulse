@@ -1,30 +1,6 @@
 package structure
 
-import (
-	"io"
-)
-
-type hasher interface {
-	// Write (via the embedded io.Writer interface) adds more data to the running hash.
-	// It never returns an error.
-	io.Writer
-
-	// Sum appends the current hash to b and returns the resulting slice.
-	// It does not change the underlying hash state.
-	Sum(b []byte) []byte
-
-	// Reset resets the Hash to its initial state.
-	Reset()
-
-	// Size returns the number of bytes Sum will return.
-	Size() int
-
-	// BlockSize returns the hash's underlying block size.
-	// The Write method must be able to accept any amount
-	// of data, but it may operate more efficiently if all writes
-	// are a multiple of the block size.
-	BlockSize() int
-}
+import "hash/fnv"
 
 type entry struct {
 	key   string
@@ -37,25 +13,18 @@ type bucket struct {
 }
 
 type HashTable struct {
-	hasher hasher
-
 	bucketCount uint64
-
-	buckets []*bucket
-
-	overFlow *HashTable
-
-	entryCount int // Number of elements in the table
-
-	loadFactor float64
+	buckets     []*bucket
+	overFlow    *HashTable
+	entryCount  int // Number of elements in the table
+	loadFactor  float64
 }
 
-func NewHashTable(hasher hasher, bucketCount uint64, loadFactor float64) *HashTable {
+func NewHashTable(bucketCount uint64, loadFactor float64) *HashTable {
 	if bucketCount < 2 {
 		bucketCount = 2
 	}
 	return &HashTable{
-		hasher:      hasher,
 		bucketCount: bucketCount,
 		buckets:     make([]*bucket, bucketCount),
 		overFlow:    nil,
@@ -63,28 +32,15 @@ func NewHashTable(hasher hasher, bucketCount uint64, loadFactor float64) *HashTa
 	}
 }
 
-func (h *HashTable) hash(key string) (uint64, error) {
-	h.hasher.Reset()
-	defer h.hasher.Reset()
-
-	_, err := h.hasher.Write([]byte(key))
+func (h *HashTable) getBucketIndex(key string) (uint64, error) {
+	hf := fnv.New64a()
+	_, err := hf.Write([]byte(key))
 	if err != nil {
 		return 0, err
 	}
+	hash := hf.Sum64()
 
-	hashBytes := h.hasher.Sum(nil)
-
-	var hashValue uint64
-
-	for _, b := range hashBytes {
-		hashValue = (hashValue << 8) + uint64(b)
-	}
-
-	return hashValue, nil
-}
-
-func (h *HashTable) getLOB(data uint64) uint64 {
-	return data % h.bucketCount
+	return hash % h.bucketCount, nil
 }
 
 func (h *HashTable) getLoadFactor() float64 {
@@ -97,13 +53,12 @@ func (h *HashTable) Insert(key string, value interface{}) error {
 		h.resize()
 	}
 
-	hashedKey, err := h.hash(key)
+	bucketIndex, err := h.getBucketIndex(key)
 	if err != nil {
 		return err
 	}
-	lob := h.getLOB(hashedKey)
 
-	nominatedBucket := h.buckets[lob]
+	nominatedBucket := h.buckets[bucketIndex]
 
 	if nominatedBucket == nil {
 		slots := [8]*entry{}
@@ -111,7 +66,7 @@ func (h *HashTable) Insert(key string, value interface{}) error {
 			slots: slots,
 			count: 0,
 		}
-		h.buckets[lob] = nominatedBucket
+		h.buckets[bucketIndex] = nominatedBucket
 	}
 	for i := 0; i < len(nominatedBucket.slots); i++ {
 		if nominatedBucket.slots[i] == nil {
@@ -128,7 +83,6 @@ func (h *HashTable) Insert(key string, value interface{}) error {
 	}
 	if h.overFlow == nil {
 		h.overFlow = &HashTable{
-			hasher:      h.hasher,
 			bucketCount: h.bucketCount,
 			buckets:     make([]*bucket, h.bucketCount),
 			loadFactor:  h.loadFactor,
@@ -139,14 +93,12 @@ func (h *HashTable) Insert(key string, value interface{}) error {
 }
 
 func (h *HashTable) Get(key string) (interface{}, bool) {
-	hash, err := h.hash(key)
+	bucketIndex, err := h.getBucketIndex(key)
 	if err != nil {
 		return nil, false
 	}
 
-	index := h.getLOB(hash)
-
-	nominatedBucket := h.buckets[index]
+	nominatedBucket := h.buckets[bucketIndex]
 
 	if nominatedBucket != nil {
 		for _, slot := range nominatedBucket.slots {
@@ -168,7 +120,7 @@ func (h *HashTable) EntryCount() int {
 
 func (h *HashTable) resize() {
 	newBucketCount := h.bucketCount * 2
-	newTable := NewHashTable(h.hasher, newBucketCount, h.loadFactor)
+	newTable := NewHashTable(newBucketCount, h.loadFactor)
 
 	// Rehash all existing entries and insert into the new table
 	for _, bucket := range h.buckets {

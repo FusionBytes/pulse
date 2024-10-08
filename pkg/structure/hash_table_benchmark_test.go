@@ -2,17 +2,14 @@ package structure
 
 import (
 	"fmt"
-	"hash/fnv"
 	"testing"
-
 )
 
-// Benchmark for inserting a fixed number of elements into the hash table
+// Benchmark for inserting a fixed number of elements into the getBucketIndex table
 func BenchmarkHashTable_Insert(b *testing.B) {
-	hasher := fnv.New64a()
 	initialSize := uint64(8)
 	loadFactor := 0.75
-	ht := NewHashTable(hasher, initialSize, loadFactor)
+	ht := NewHashTable(initialSize, loadFactor)
 
 	for i := 0; i < 10000; i++ {
 		key := fmt.Sprintf("key%d", i)
@@ -23,14 +20,13 @@ func BenchmarkHashTable_Insert(b *testing.B) {
 	}
 }
 
-// Benchmark for Get operation with a pre-filled hash table
+// Benchmark for Get operation with a pre-filled getBucketIndex table
 func BenchmarkHashTable_Get(b *testing.B) {
-	hasher := fnv.New64a()
 	initialSize := uint64(8)
 	loadFactor := 0.75
-	ht := NewHashTable(hasher, initialSize, loadFactor)
+	ht := NewHashTable(initialSize, loadFactor)
 
-	// Pre-fill the hash table with values
+	// Pre-fill the getBucketIndex table with values
 	for i := 0; i < 10000; i++ {
 		key := fmt.Sprintf("key%d", i)
 		value := fmt.Sprintf("value%d", i)

@@ -1,4 +1,4 @@
-package stringcommands
+package sortedset
 
 import (
 	"pulse/pkg/structure"

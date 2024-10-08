@@ -2,7 +2,6 @@ package hashcommands
 
 import (
 	"errors"
-	"hash/fnv"
 	"pulse/pkg/structure"
 	"strings"
 )
@@ -30,7 +29,7 @@ func (s HSET) Execute(args []string) (interface{}, error) {
 	var collection *structure.HashTable
 	value, _ := s.hashTable.Get(args[0])
 	if value == nil {
-		collection = structure.NewHashTable(fnv.New64a(), 8, 0.75)
+		collection = structure.NewHashTable(8, 0.75)
 		err := s.hashTable.Insert(args[0], collection)
 		if err != nil {
 			return nil, err

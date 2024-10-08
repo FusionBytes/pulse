@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"hash/fnv"
 	"net"
 	"os"
-	"pulse/internal/commands"
 	hashcommands "pulse/internal/commands/hash"
+	sortedsetcommands "pulse/internal/commands/sortedset"
 	stringcommands "pulse/internal/commands/string"
 	"pulse/internal/parser"
-	"pulse/pkg/structure"
 )
 
 const (
@@ -20,12 +18,11 @@ const (
 
 func main() {
 	fmt.Println("Server running...")
-	scoreboards := structure.NewHashTable(fnv.New64a(), 8, 0.75)
 	parser := parser.NewParser(
-		commands.NewZAdd(scoreboards),
-		commands.NewZRange(scoreboards),
-		commands.NewZRank(scoreboards),
-		commands.NewZScore(scoreboards),
+		sortedsetcommands.NewZAdd(),
+		sortedsetcommands.NewZRange(),
+		sortedsetcommands.NewZRank(),
+		sortedsetcommands.NewZScore(),
 		stringcommands.NewSET(),
 		stringcommands.NewGET(),
 		hashcommands.NewHSET(),
@@ -56,7 +53,10 @@ func main() {
 		}
 		fmt.Println("client connected")
 		go func(connection net.Conn) {
-			defer connection.Close() // Ensure the connection is closed when done
+			defer func() {
+				connection.Close()
+				fmt.Println("client disconnected")
+			}() // Ensure the connection is closed when done
 
 			buffer := make([]byte, 1024)
 			for {
